@@ -1,13 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
+import Post from "./components/Post";
+import Pagination from "./components/Pagination";
 
 const App = () => {
   const [userData, setUserData] = useState([]);
-
-  console.log(userData);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [usersPerPage] = useState(10);
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true);
       try {
         const API_URL =
           "https://geektrust.s3-ap-southeast-1.amazonaws.com/adminui-problem/members.json";
@@ -15,34 +19,31 @@ const App = () => {
         const data = await fetch(API_URL);
         const res = await data.json();
         setUserData(res);
+        setLoading(false);
       } catch (err) {
+        alert("failed to fetch data");
         console.error(err);
       }
     }
     fetchData();
   }, []);
 
+  const indexOfLastUser = currentPage * usersPerPage;
+  const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const currentUsers = userData.slice(indexOfFirstUser, indexOfLastUser);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="main">
       <h1>Employee Data Table</h1>
-      <div className="table-container">
-        <table>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-          </tr>
-          {userData.map(({ id, name, email, role }) => (
-            <tr key={id}>
-              <td>{id}</td>
-              <td>{name}</td>
-              <td>{email}</td>
-              <td>{role}</td>
-            </tr>
-          ))}
-        </table>
-      </div>
+      <Post loading={loading} posts={currentUsers} />
+      <Pagination
+        usersPerPage={usersPerPage}
+        totalUsers={userData.length}
+        paginate={paginate}
+        currentPage={currentPage}
+      />
     </div>
   );
 };
